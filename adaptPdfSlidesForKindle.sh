@@ -34,8 +34,8 @@ echo "Croppate tutte le pagine. Ora creo i margini ottimi"
 
 for tmpFile in $tmpFolder/*.pdf; do
 	width=`convert $tmpFile -ping -format "%w" info:`
-	heigth=`convert $tmpFile -ping -format "%h" info:`
-	optimalWidth=$(echo "scale=0; 120*$heigth/85+1" | bc)
+	height=`convert $tmpFile -ping -format "%h" info:`
+	optimalWidth=$(echo "scale=0; 120*$height/85+1" | bc)
 	if [ $optimalWidth -gt $width ]; then
 		marginLeftAndRight=$[($optimalWidth-$width)/2]
 		pdfcrop --margins "$marginLeftAndRight 0" $tmpFile  $tmpFile > /dev/null &
@@ -46,22 +46,27 @@ for tmpFile in $tmpFolder/*.pdf; do
 
 done
 wait
+for tmpFile in $tmpFolder/*.pdf; do
+	pdfcrop --margins "$borderSize $borderSize" $tmpFile  $tmpFile > /dev/null &
+done
+wait
+
 echo "creati tutti i margini"
 
 pagina=1;
 for tmpFile in $tmpFolder/*.pdf; do
 	width=`convert $tmpFile -ping -format "%w" info:`
-	heigth=`convert $tmpFile -ping -format "%h" info:`
+	height=`convert $tmpFile -ping -format "%h" info:`
 	echo -n "$pagina / $totPagine"
-	if [ ! -e  $[width]x$[heigth]x$borderSize.pdf ]; then
-		border.sh $width $heigth $borderSize
-		convert $[width]x$[heigth]x$borderSize.png $[width]x$[heigth]x$borderSize.pdf 
-		rm $[width]x$[heigth]x$borderSize.png
+	if [ ! -e  $[width]x$[height]x$borderSize.pdf ]; then
+		border.sh $width $height $borderSize
+		convert $[width]x$[height]x$borderSize.png $[width]x$[height]x$borderSize.pdf 
+		rm $[width]x$[height]x$borderSize.png
 		echo -n " -> creato bordo"
 #	else
 #		echo -n " -> bordo già pronto"
 	fi
-	pdftk $tmpFile stamp $[width]x$[heigth]x$borderSize.pdf output $tmpFile.pdf
+	pdftk $tmpFile stamp $[width]x$[height]x$borderSize.pdf output $tmpFile.pdf
 	echo -n " -> bordo"
 	echo " -> fatta"
 	pagina=$[$pagina+1]
