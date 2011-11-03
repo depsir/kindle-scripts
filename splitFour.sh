@@ -15,6 +15,7 @@
 #we do not want to obtain images instead of plain text
 
 #gather input document
+##handle input arguments
 
 # split the input document into subpages
 
