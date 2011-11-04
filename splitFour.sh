@@ -19,6 +19,7 @@
 
 # split the input document into subpages
 
+# get page size
 # crop and order subpages
 gs -sDEVICE=pdfwrite -o outputPdf.pdf -c "[/CropBox [54 54 1314 810] /PAGES pdfmark" -f inputPdf.pdf
 
