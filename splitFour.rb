@@ -1,21 +1,47 @@
 #!/usr/bin/env ruby
 
-# this script splits a pdf document with 4 subpages in a page into a single paged document
+usage = "USAGE: splitFour filename"
 
-#example:
-#|----|----|
-#| 1  | 2  |		|----| |----| |----| |----|
-#|    |    |		| 1  | | 2  | | 3  | | 4  |
-#|----|----|	->	|    | |    | |    | |    |
-#| 3  | 4  |		|----| |----| |----| |----|
-#|    |    |
-#|----|----|
+description = "This script splits a pdf document with 4 subpages for each page into a single paged document.
+we need to use ghostscript directly in order to preserve text:
+we do not want to obtain images instead of plain text."
 
-#we need to use ghostscript directly in order to preserve text:
-#we do not want to obtain images instead of plain text
+example = "example:
+|----|----|
+| 1  | 2  |		|----| |----| |----| |----|
+|    |    |		| 1  | | 2  | | 3  | | 4  |
+|----|----|	->	|    | |    | |    | |    |
+| 3  | 4  |		|----| |----| |----| |----|
+|    |    |
+|----|----|"
+
+if ARGV.length == 0
+	puts usage 
+	puts
+	puts description
+	puts
+	puts example
+	Kernel::exit
+end
 
 #gather input document
 ##handle input arguments
+## @param 1 file pdf da elaborare
+#%x[clear]
+#filename=$1
+#newFilename=adapted_$filename
+#echo "Elaboro file $filename. Verrà salvato come $newFilename"
+#borderSize=5
+
+#tmpFolder="/tmp/"${0##*/}$filename$RANDOM
+#echo "Creata tmp folder: $tmpFolder"
+
+##nella cartella temporanea verranno messe le singole pagine da elaborare ad una ad una
+#mkdir $tmpFolder
+
+#pdftk $1 burst output $tmpFolder/%04d.pdf
+#echo "Estratte singole pagine"
+
 
 # split the input document into subpages
 
@@ -31,6 +57,7 @@ pages.each do |lol|
 	puts "#{width}"
 	puts "#{height}"
 end
+
 # crop and order subpages
 #puts %x[gs -sDEVICE=pdfwrite -o outputPdf.pdf -c "[/CropBox [54 54 1314 810] /PAGES pdfmark" -f inputPdf.pdf]
 
