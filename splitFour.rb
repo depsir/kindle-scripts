@@ -26,18 +26,21 @@ end
 
 #gather input document
 ##handle input arguments
-## @param 1 file pdf da elaborare
-#%x[clear]
-#filename=$1
-#newFilename=adapted_$filename
-#echo "Elaboro file $filename. Verrà salvato come $newFilename"
-#borderSize=5
+## @param 1 file pdf to be modified
+filename = ARGV[0]
+if !File.exists?(filename)
+	puts "Il file non esiste"
+	Kernel::exit
+end
 
-#tmpFolder="/tmp/"${0##*/}$filename$RANDOM
-#echo "Creata tmp folder: $tmpFolder"
+newFilename = "adapted_" + filename
+puts "Elaboro file #{filename}. Verrà salvato come #{newFilename}"
+borderSize=5
 
 ##nella cartella temporanea verranno messe le singole pagine da elaborare ad una ad una
-#mkdir $tmpFolder
+tmpFolder="/tmp/" + filename + rand(10000).to_s
+Dir.mkdir(tmpFolder)
+puts "Creata tmp folder: " + tmpFolder
 
 #pdftk $1 burst output $tmpFolder/%04d.pdf
 #echo "Estratte singole pagine"
@@ -54,8 +57,8 @@ pages.each do |lol|
 #	lol.each_line('x') {|s| puts s}
 	width = Integer(lol.partition(/[0-9]+ x [0-9]+/)[1].partition(" x ")[0])
 	height = Integer(lol.partition(/[0-9]+ x [0-9]+/)[1].partition(" x ")[2])
-	puts "#{width}"
-	puts "#{height}"
+	puts "w #{width}"
+	puts "h #{height}"
 end
 
 # crop and order subpages
@@ -64,3 +67,6 @@ end
 # merge subpages
 
 #crop the document?
+
+#remove temporary files
+Dir.rmdir(tmpFolder)
