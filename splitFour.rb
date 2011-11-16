@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+require 'optparse'
 
 usage = "USAGE: splitFour filename"
 
@@ -14,9 +15,24 @@ example = "example:
 | 3  | 4  |		|----| |----| |----| |----|
 |    |    |
 |----|----|"
+#use option row and columns to parametrize
+# use option order (per row or per columns)
 
-if ARGV.length == 0
-	puts usage 
+##handle input arguments
+options = {}
+OptionParser.new do |opts|
+  opts.banner = "Usage: example.rb [options]"
+
+  opts.on("-v", "--[no-]verbose", "Run verbosely") do |v|
+    options[:verbose] = v
+  end
+end.parse!
+
+p options
+p ARGV
+#old way
+if ARGV.length == 0 || ["-h", "-H", "--help"].include?(ARGV[0])
+	puts usage
 	puts
 	puts description
 	puts
@@ -24,9 +40,8 @@ if ARGV.length == 0
 	Kernel::exit
 end
 
-#gather input document
-##handle input arguments
 ## @param 1 file pdf to be modified
+#gather input document
 filename = ARGV[0]
 if !File.exists?(filename)
 	puts "Il file non esiste"
@@ -42,9 +57,12 @@ tmpFolder="/tmp/" + filename + rand(10000).to_s
 Dir.mkdir(tmpFolder)
 puts "Creata tmp folder: " + tmpFolder
 
+totPages = %x[pdfinfo Cap3.pdf | grep "Pages"]
+totPages = totPages[/[0-9]+/]
+
 pages = %x[pdfinfo -f 1 -l 3 Cap3.pdf | grep "Page\ "]
 pages.each do |lol|
-	pageNumber
+  numPage = lol[/[0-9]+/]
 	width = Integer(lol.partition(/[0-9]+ x [0-9]+/)[1].partition(" x ")[0])
 	height = Integer(lol.partition(/[0-9]+ x [0-9]+/)[1].partition(" x ")[2])
 	puts "w #{width}"
@@ -63,3 +81,4 @@ end
 
 #remove temporary files
 Dir.rmdir(tmpFolder)
+
