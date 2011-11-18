@@ -41,11 +41,15 @@ OptionParser.new { |opts|
 		options[:colsOffset] = co
 	end
 
-  options[:invOrder] = 2
+  options[:invOrder] = false
 	opts.on("-o", "--invertOrder", "Instead of default left to right, top to bottom use top to bottom, left to right ") do
 		options[:invOrder] = true
 	end
 
+ options[:debug] = false
+	opts.on("-d", "--debug", "prints more informations") do
+		options[:debug] = true
+	end
 
   opts.on( '-h', '--help', 'Display this screen' ) do
        puts opts
@@ -60,7 +64,7 @@ if File.exists?(filename)
   puts "Elaboro file #{filename}. Verrà salvato come #{newFilename}"
   borderSize=5
 
-  ##nella cartella temporanea verranno messe le singole pagine da elaborare ad una ad una
+  #nella cartella temporanea verranno messe le singole pagine da elaborare ad una ad una
   tmpFolder="/tmp/" + filename + rand(10000).to_s
   Dir.mkdir(tmpFolder)
   puts "Creata tmp folder: " + tmpFolder
@@ -68,28 +72,38 @@ if File.exists?(filename)
   totPages = %x[pdfinfo Cap3.pdf | grep "Pages"]
   totPages = totPages[/[0-9]+/]
 
-  pages = %x[pdfinfo -f 1 -l 1 Cap3.pdf | grep "Page\ "]
+  pages = %x[pdfinfo -f 1 -l #{totPages} Cap3.pdf | grep "Page\ "]
   pages.each do |lol|
-	  numPage = lol[/[0-9]+/]
+          numPage = lol[/[0-9]+/]
 	  width = Integer(lol.partition(/[0-9]+ x [0-9]+/)[1].partition(" x ")[0])
 	  height = Integer(lol.partition(/[0-9]+ x [0-9]+/)[1].partition(" x ")[2])
 	  puts "w #{width}"
 	  puts "h #{height}"
   #http://stackoverflow.com/questions/8158295/what-dimensions-do-the-coordinates-in-pdf-cropbox-refer-to
-	  %x{gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dFirstPage="#{numPage}" -dLastPage="#{numPage}" -sOutputFile="out.pdf" "#{filename}"}
-	  %x{gs -sDEVICE=pdfwrite -o out1.pdf -c "[/CropBox [0 #{height} #{width/2} #{height/2}] /PAGES pdfmark" -f out.pdf}
-	  %x{gs -sDEVICE=pdfwrite -o out2.pdf -c "[/CropBox [#{width/2} #{height} #{width} #{height/2}] /PAGES pdfmark" -f out.pdf}
-	  %x{gs -sDEVICE=pdfwrite -o out3.pdf -c "[/CropBox [0 #{height/2} #{width/2} 0] /PAGES pdfmark" -f out.pdf}
-	  %x{gs -sDEVICE=pdfwrite -o out4.pdf -c "[/CropBox [#{width/2} #{height/2} #{width} 0] /PAGES pdfmark" -f out.pdf}
+	  %x{gs #{if options[:debug]==false then "-q -sstdout=%sstderr" end} -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dFirstPage=#{numPage} -dLastPage=#{numPage} -sOutputFile=#{tmpFolder+"/"}page#{numPage}.pdf #{filename} #{if options[:debug]==false then "2>/dev/null" end}}
 
+	  %x{gs #{if options[:debug]==false then "-q -sstdout=%sstderr" end} -sDEVICE=pdfwrite -o #{tmpFolder+"/"}out#{numPage}.1.pdf -c "[/CropBox [0 #{height} #{width/2} #{height/2}] /PAGES pdfmark" -f #{tmpFolder+"/"}page#{numPage}.pdf #{if options[:debug]==false then "2>/dev/null" end}}
+	  %x{gs #{if options[:debug]==false then "-q -sstdout=%sstderr" end} -sDEVICE=pdfwrite -o #{tmpFolder+"/"}out#{numPage}.2.pdf -c "[/CropBox [#{width/2} #{height} #{width} #{height/2}] /PAGES pdfmark" -f #{tmpFolder+"/"}page#{numPage}.pdf #{if options[:debug]==false then "2>/dev/null" end}}
+	  %x{gs #{if options[:debug]==false then "-q -sstdout=%sstderr" end} -sDEVICE=pdfwrite -o #{tmpFolder+"/"}out#{numPage}.3.pdf -c "[/CropBox [0 #{height/2} #{width/2} 0] /PAGES pdfmark" -f #{tmpFolder+"/"}page#{numPage}.pdf #{if options[:debug]==false then "2>/dev/null" end}}
+	  %x{gs #{if options[:debug]==false then "-q -sstdout=%sstderr" end} -sDEVICE=pdfwrite -o #{tmpFolder+"/"}out#{numPage}.4.pdf -c "[/CropBox [#{width/2} #{height/2} #{width} 0] /PAGES pdfmark" -f #{tmpFolder+"/"}page#{numPage}.pdf #{if options[:debug]==false then "2>/dev/null" end}}
+          %x{gs #{if options[:debug]==false then "-q -sstdout=%sstderr" end} -dNOPAUSE -sDEVICE=pdfwrite -sOUTPUTFILE=#{tmpFolder+"/"}page#{numPage}.pdf -dBATCH #{tmpFolder+"/"}out#{numPage}.1.pdf #{tmpFolder+"/"}out#{numPage}.2.pdf #{tmpFolder+"/"}out#{numPage}.3.pdf #{tmpFolder+"/"}out#{numPage}.4.pdf #{if options[:debug]==false then "2>/dev/null" end}}
+
+        File.delete("#{tmpFolder+"/"}out#{numPage}.1.pdf")
+        File.delete("#{tmpFolder+"/"}out#{numPage}.2.pdf")
+        File.delete("#{tmpFolder+"/"}out#{numPage}.3.pdf")
+        File.delete("#{tmpFolder+"/"}out#{numPage}.4.pdf")
   end
 
   # merge subpages
-  %x{gs -dNOPAUSE -sDEVICE=pdfwrite -sOUTPUTFILE=page1.pdf -dBATCH out1.pdf out2.pdf out3.pdf out4.pdf}
+subpages=""
+(1..Integer(totPages)).each {|g| subpages=subpages+" "+tmpFolder+"/page"+g.to_s+".pdf"}
+ %x{gs #{if options[:debug]==false then "-q -sstdout=%sstderr" end} -dNOPAUSE -sDEVICE=pdfwrite -sOUTPUTFILE=#{newFilename} -dBATCH #{subpages} #{if options[:debug]==false then "2>/dev/null" end}}
+
+
   #crop the document?
 
   #remove temporary files
-  Dir.rmdir(tmpFolder)
+#  Dir.rmdir(tmpFolder)
 else
 	puts "Il file non esiste"
 end
