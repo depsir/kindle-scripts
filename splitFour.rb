@@ -21,14 +21,31 @@ example = "example:
 options = {}
 OptionParser.new { |opts|
 	opts.banner = "Usage: example.rb [options] filename [filenames]"
-
+  options[:rows] = 2
 	opts.on("-r", "--rows", "Number of rows to split") do |r|
 		options[:rows] = r
 	end
 
+  options[:cols] = 2
 	opts.on("-c", "--columns", "Number of columns to split") do |c|
 		options[:cols] = c
 	end
+
+  options[:rowOffset] = 0
+	opts.on("-R", "--rowOffset", "---") do |ro|
+		options[:rowOffset] = ro
+	end
+
+  options[:colsOffset] = 0
+	opts.on("-C", "--colsOffset", "---") do |co|
+		options[:colsOffset] = co
+	end
+
+  options[:invOrder] = 2
+	opts.on("-o", "--invertOrder", "Instead of default left to right, top to bottom use top to bottom, left to right ") do
+		options[:invOrder] = true
+	end
+
 
   opts.on( '-h', '--help', 'Display this screen' ) do
        puts opts
@@ -51,23 +68,24 @@ if File.exists?(filename)
   totPages = %x[pdfinfo Cap3.pdf | grep "Pages"]
   totPages = totPages[/[0-9]+/]
 
-  pages = %x[pdfinfo -f 1 -l 3 Cap3.pdf | grep "Page\ "]
+  pages = %x[pdfinfo -f 1 -l 1 Cap3.pdf | grep "Page\ "]
   pages.each do |lol|
 	  numPage = lol[/[0-9]+/]
 	  width = Integer(lol.partition(/[0-9]+ x [0-9]+/)[1].partition(" x ")[0])
 	  height = Integer(lol.partition(/[0-9]+ x [0-9]+/)[1].partition(" x ")[2])
 	  puts "w #{width}"
 	  puts "h #{height}"
-	  #%x{gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dFirstPage=#{pageNumber} -dLastPage=#{pageNumber} -sOutputFile="out.pdf" "#{filename}"}
-	  #puts %x[gs -sDEVICE=pdfwrite -o outputPdf.pdf -c "[/CropBox [54 54 1314 810] /PAGES pdfmark" -f inputPdf.pdf]
-	  #puts %x[gs -sDEVICE=pdfwrite -o outputPdf.pdf -c "[/CropBox [54 54 1314 810] /PAGES pdfmark" -f inputPdf.pdf]
-	  #puts %x[gs -sDEVICE=pdfwrite -o outputPdf.pdf -c "[/CropBox [54 54 1314 810] /PAGES pdfmark" -f inputPdf.pdf]
-	  #puts %x[gs -sDEVICE=pdfwrite -o outputPdf.pdf -c "[/CropBox [54 54 1314 810] /PAGES pdfmark" -f inputPdf.pdf]
+  #http://stackoverflow.com/questions/8158295/what-dimensions-do-the-coordinates-in-pdf-cropbox-refer-to
+	  %x{gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dFirstPage="#{numPage}" -dLastPage="#{numPage}" -sOutputFile="out.pdf" "#{filename}"}
+	  %x{gs -sDEVICE=pdfwrite -o out1.pdf -c "[/CropBox [0 #{height} #{width/2} #{height/2}] /PAGES pdfmark" -f out.pdf}
+	  %x{gs -sDEVICE=pdfwrite -o out2.pdf -c "[/CropBox [#{width/2} #{height} #{width} #{height/2}] /PAGES pdfmark" -f out.pdf}
+	  %x{gs -sDEVICE=pdfwrite -o out3.pdf -c "[/CropBox [0 #{height/2} #{width/2} 0] /PAGES pdfmark" -f out.pdf}
+	  %x{gs -sDEVICE=pdfwrite -o out4.pdf -c "[/CropBox [#{width/2} #{height/2} #{width} 0] /PAGES pdfmark" -f out.pdf}
 
   end
 
   # merge subpages
-
+  %x{gs -dNOPAUSE -sDEVICE=pdfwrite -sOUTPUTFILE=page1.pdf -dBATCH out1.pdf out2.pdf out3.pdf out4.pdf}
   #crop the document?
 
   #remove temporary files
