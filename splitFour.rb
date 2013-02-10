@@ -22,12 +22,12 @@ options = {}
 OptionParser.new { |opts|
 	opts.banner = "Usage: example.rb [options] filename [filenames]"
   options[:rows] = 2
-	opts.on("-r", "--rows", "Number of rows to split") do |r|
+	opts.on("-r rows", "--rows", "Number of rows to split") do |r|
 		options[:rows] = r
 	end
 
   options[:cols] = 2
-	opts.on("-c", "--columns", "Number of columns to split") do |c|
+	opts.on("-c columns", "--columns", "Number of columns to split") do |c|
 		options[:cols] = c
 	end
 
